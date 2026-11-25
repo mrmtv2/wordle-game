@@ -4,8 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Угадай слово</title>
-<script src="https://telegram.org" defer></script>
-<script src="https://jsdelivr.net" defer></script>
 <style>
   :root {
     --bg: #121213; --tile-border: #3a3a3c; --text: #ffffff;
@@ -39,7 +37,7 @@
   .tile {
     border: 2px solid var(--tile-border); border-radius: 8px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 22px; font-weight: 800; text-transform: uppercase; transition: transform 0.25s, background 0.3s;
+    font-size: 22px; font-weight: 800; text-transform: uppercase; transition: transform 0.2s, background 0.25s;
   }
   .tile.filled { border-color: #666; transform: scale(1.04); }
   .tile.green { background: var(--green); border-color: var(--green); }
@@ -61,15 +59,17 @@
   }
   .modal-box {
     background: #1e1e20; border-radius: 18px; padding: 22px; max-width: 340px; width: 100%;
-    text-align: center; border: 1px solid #3a3a3c;
+    text-align: center; border: 1px solid #3a3a3c; position: relative; z-index: 102;
   }
   .modal-box h2 { margin-top: 0; font-size: 20px; }
   .modal-box p { line-height: 1.45; font-size: 15px; color: #ddd; }
   .modal-btns { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+  #fw-canvas { position: fixed; inset: 0; pointer-events: none; z-index: 101; }
 </style>
 </head>
 <body>
 
+<canvas id="fw-canvas"></canvas>
 <h1>✨ Угадай слово ✨</h1>
 
 <div id="setup-screen" class="setup-card">
@@ -109,9 +109,7 @@
   </div>
 </div>
 
-<script src="game.js"></script>
 <script src="words.js"></script>
 <script src="game.js"></script>
 </body>
 </html>
-

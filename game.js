@@ -1,4 +1,5 @@
 const tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : {};
+if (tg.ready) tg.ready();
 if (tg.expand) tg.expand();
 const userName = (tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.first_name) || "Ангелина";
 
@@ -34,7 +35,7 @@ function startGame() {
   document.getElementById('modal').style.display = 'none';
   document.getElementById('setup-screen').style.display = 'none';
   document.getElementById('game-screen').style.display = 'flex';
-  const pool = WORDS[wordLen] || WORDS[String(wordLen)];
+  const pool = (typeof WORDS !== 'undefined' && (WORDS[wordLen] || WORDS[String(wordLen)])) || ["ЧАШКА","ОКЕАН","РАДУГА"];
   secret = pool[Math.floor(Math.random() * pool.length)];
   maxRows = ATTEMPTS[wordLen][diff];
   curRow = 0; curGuess = ''; gameOver = false;
@@ -102,12 +103,42 @@ function updateRow() {
 }
 
 function launchFireworks() {
-  const end = Date.now() + 2800;
-  (function frame() {
-    confetti({ particleCount: 6, angle: 60, spread: 55, origin: { x: 0 } });
-    confetti({ particleCount: 6, angle: 120, spread: 55, origin: { x: 1 } });
-    if (Date.now() < end) requestAnimationFrame(frame);
-  }());
+  const canvas = document.getElementById('fw-canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const particles = [];
+  const colors = ['#ff4d4d','#ffd700','#4dff88','#4da6ff','#ff66ff','#ff944d'];
+
+  for (let b = 0; b < 6; b++) {
+    const cx = Math.random() * canvas.width * 0.8 + canvas.width * 0.1;
+    const cy = Math.random() * canvas.height * 0.45 + canvas.height * 0.1;
+    for (let i = 0; i < 45; i++) {
+      const angle = (Math.PI * 2 * i) / 45;
+      const speed = Math.random() * 4 + 2;
+      particles.push({
+        x: cx, y: cy, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+        alpha: 1, color: colors[Math.floor(Math.random() * colors.length)]
+      });
+    }
+  }
+
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let alive = false;
+    particles.forEach(p => {
+      p.x += p.vx; p.y += p.vy; p.vy += 0.08; p.alpha -= 0.015;
+      if (p.alpha > 0) {
+        alive = true;
+        ctx.globalAlpha = p.alpha;
+        ctx.fillStyle = p.color;
+        ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI * 2); ctx.fill();
+      }
+    });
+    if (alive) requestAnimationFrame(animate);
+    else ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+  animate();
 }
 
 function submitGuess() {
@@ -171,5 +202,5 @@ function showModal(title, html) {
 }
 function shareResult() {
   if (tg.sendData) tg.sendData(lastShareText);
-  tg.close();
+  if (tg.close) tg.close();
 }
