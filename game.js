@@ -3,6 +3,25 @@ if (tg.ready) tg.ready();
 if (tg.expand) tg.expand();
 const userName = (tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.first_name) || "Ангелина";
 
+const GREETINGS = [
+  `Привет, ${userName}! Прокачаем мозги? 🧠✨`,
+  `Привет! Я по тебе скучал, ${userName}, ну что, поиграем? 💖`,
+  `О, ${userName} заглянула! Устроим разминку для ума? 🎯`,
+  `Привет, ${userName}! Готова разгадать пару хитрых слов? 🔥`,
+  `С возвращением, ${userName}! Проверим твою интуицию сегодня? 🌟`,
+  `Привет-привет, ${userName}! Самое время немного отвлечься и поиграть ☕️🎮`,
+  `Ура, ${userName} здесь! Покажем этим словам, кто тут главный? 👑`,
+  `Привет, ${userName}! Загадаем слово посложнее или начнём с разминки? 😉`,
+  `Рад тебя видеть, ${userName}! Погнали бить новые рекорды? 🚀`,
+  `Привет, ${userName}! У меня как раз припасено кое-что интересное для тебя 🎁`
+];
+
+const DIFF_LABELS = {
+  easy: "🟢 Разминочный",
+  medium: "🟡 Ммм, не дурно!",
+  hard: "🔴 Ты что, профи?"
+};
+
 const ATTEMPTS = { 4:{easy:8,medium:6,hard:5}, 5:{easy:10,medium:8,hard:5}, 6:{easy:10,medium:8,hard:5} };
 const KB_ROWS = [
   ["Й","Ц","У","К","Е","Н","Г","Ш","Щ","З","Х"],
@@ -14,6 +33,19 @@ let wordLen = 5, diff = 'medium', secret = '', maxRows = 8, curRow = 0, curGuess
 let winStreak = Number(localStorage.getItem('w_win') || 0);
 let lossStreak = Number(localStorage.getItem('w_loss') || 0);
 let lastShareText = '';
+let fwTimer = null, fwAnimId = null;
+
+document.getElementById('welcome-msg').innerText = GREETINGS[Math.floor(Math.random() * GREETINGS.length)];
+
+function updateStreakBadge() {
+  document.getElementById('streak-info').innerText = `🔥 Серия побед: ${winStreak}`;
+}
+updateStreakBadge();
+
+function openSetup() {
+  document.getElementById('welcome-screen').style.display = 'none';
+  document.getElementById('setup-screen').style.display = 'block';
+}
 
 function selectLen(l, el) {
   wordLen = l;
@@ -25,13 +57,24 @@ function selectDiff(d, el) {
   document.querySelectorAll('#diff-group .opt-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
 }
+
+function stopFireworks() {
+  if (fwTimer) { clearInterval(fwTimer); fwTimer = null; }
+  if (fwAnimId) { cancelAnimationFrame(fwAnimId); fwAnimId = null; }
+  const canvas = document.getElementById('fw-canvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
 function backToMenu() {
+  stopFireworks();
   document.getElementById('modal').style.display = 'none';
   document.getElementById('game-screen').style.display = 'none';
   document.getElementById('setup-screen').style.display = 'block';
 }
 
 function startGame() {
+  stopFireworks();
   document.getElementById('modal').style.display = 'none';
   document.getElementById('setup-screen').style.display = 'none';
   document.getElementById('game-screen').style.display = 'flex';
@@ -40,8 +83,7 @@ function startGame() {
   maxRows = ATTEMPTS[wordLen][diff];
   curRow = 0; curGuess = ''; gameOver = false;
 
-  const dNames = {easy:'Лёгкий', medium:'Средний', hard:'Сложный'};
-  document.getElementById('info-label').innerText = `${wordLen} букв • ${dNames[diff]} (${maxRows} поп.)`;
+  document.getElementById('info-label').innerText = `${wordLen} букв • ${DIFF_LABELS[diff]} (${maxRows} поп.)`;
 
   const board = document.getElementById('board');
   board.innerHTML = '';
@@ -103,19 +145,20 @@ function updateRow() {
 }
 
 function launchFireworks() {
+  stopFireworks();
   const canvas = document.getElementById('fw-canvas');
   const ctx = canvas.getContext('2d');
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
-  const particles = [];
-  const colors = ['#ff4d4d','#ffd700','#4dff88','#4da6ff','#ff66ff','#ff944d'];
+  let particles = [];
+  const colors = ['#ff4d4d','#ffd700','#34d399','#38bdf8','#f472b6','#fb923c','#a78bfa'];
 
-  for (let b = 0; b < 6; b++) {
+  function spawnBurst() {
     const cx = Math.random() * canvas.width * 0.8 + canvas.width * 0.1;
-    const cy = Math.random() * canvas.height * 0.45 + canvas.height * 0.1;
-    for (let i = 0; i < 45; i++) {
-      const angle = (Math.PI * 2 * i) / 45;
-      const speed = Math.random() * 4 + 2;
+    const cy = Math.random() * canvas.height * 0.55 + canvas.height * 0.08;
+    for (let i = 0; i < 42; i++) {
+      const angle = (Math.PI * 2 * i) / 42;
+      const speed = Math.random() * 4.5 + 1.8;
       particles.push({
         x: cx, y: cy, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
         alpha: 1, color: colors[Math.floor(Math.random() * colors.length)]
@@ -123,20 +166,20 @@ function launchFireworks() {
     }
   }
 
+  spawnBurst();
+  spawnBurst();
+  fwTimer = setInterval(spawnBurst, 650);
+
   function animate() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    let alive = false;
+    particles = particles.filter(p => p.alpha > 0);
     particles.forEach(p => {
-      p.x += p.vx; p.y += p.vy; p.vy += 0.08; p.alpha -= 0.015;
-      if (p.alpha > 0) {
-        alive = true;
-        ctx.globalAlpha = p.alpha;
-        ctx.fillStyle = p.color;
-        ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI * 2); ctx.fill();
-      }
+      p.x += p.vx; p.y += p.vy; p.vy += 0.06; p.alpha -= 0.014;
+      ctx.globalAlpha = Math.max(0, p.alpha);
+      ctx.fillStyle = p.color;
+      ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI * 2); ctx.fill();
     });
-    if (alive) requestAnimationFrame(animate);
-    else ctx.clearRect(0, 0, canvas.width, canvas.height);
+    fwAnimId = requestAnimationFrame(animate);
   }
   animate();
 }
@@ -166,6 +209,7 @@ function submitGuess() {
   if (curGuess === secret) {
     gameOver = true; winStreak++; lossStreak = 0;
     localStorage.setItem('w_win', winStreak); localStorage.setItem('w_loss', 0);
+    updateStreakBadge();
     if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
     launchFireworks();
     let msg = diff === 'hard'
@@ -185,6 +229,7 @@ function submitGuess() {
   if (curRow >= maxRows) {
     gameOver = true; lossStreak++; winStreak = 0;
     localStorage.setItem('w_loss', lossStreak); localStorage.setItem('w_win', 0);
+    updateStreakBadge();
     if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
     let msg = diff === 'hard'
       ? `💛 Ничего страшного, ${userName}! Это же <b>сложный</b> уровень. Было загадано слово: <b>${secret}</b>.`
@@ -201,6 +246,7 @@ function showModal(title, html) {
   document.getElementById('modal').style.display = 'flex';
 }
 function shareResult() {
+  stopFireworks();
   if (tg.sendData) tg.sendData(lastShareText);
   if (tg.close) tg.close();
 }
