@@ -66,7 +66,7 @@ function showCatBanner(diffKey) {
   if (bannerTimeout) clearTimeout(bannerTimeout);
   banner.classList.add('show');
   if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-  bannerTimeout = setTimeout(() => { banner.classList.remove('show'); }, 2100);
+  bannerTimeout = setTimeout(() => { banner.classList.remove('show'); }, 3200);
 }
 
 function stopFireworks() {
@@ -247,6 +247,7 @@ function shareResult() {
   if (tg.sendData) tg.sendData(lastShareText);
   if (tg.close) tg.close();
 }
-const WIZARD_CAT_SVG = '<svg viewBox="0 0 120 120" width="96" height="96"><polygon points="34,54 40,26 56,46" fill="#eab676" stroke="#d49b57" stroke-width="2" stroke-linejoin="round"/><polygon points="86,54 80,26 64,46" fill="#eab676" stroke="#d49b57" stroke-width="2" stroke-linejoin="round"/><polygon points="39,50 43,32 52,45" fill="#f7b2ad"/><polygon points="81,50 77,32 68,45" fill="#f7b2ad"/><ellipse cx="60" cy="88" rx="34" ry="25" fill="#eab676"/><ellipse cx="60" cy="66" rx="29" ry="24" fill="#f3c68f"/><ellipse cx="60" cy="72" rx="14" ry="10" fill="#fff5e6"/><polygon points="60,66 56,70 64,70" fill="#e07a7a"/><path d="M53,74 Q60,79 60,74 Q60,79 67,74" stroke="#5a3a22" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="48" cy="61" r="5" fill="#1e293b"/><circle cx="72" cy="61" r="5" fill="#1e293b"/><circle cx="46" cy="59" r="1.8" fill="#fff"/><circle cx="70" cy="59" r="1.8" fill="#fff"/><circle cx="48" cy="61" r="10.5" stroke="#38bdf8" stroke-width="2.6" fill="rgba(56,189,248,0.12)"/><circle cx="72" cy="61" r="10.5" stroke="#38bdf8" stroke-width="2.6" fill="rgba(56,189,248,0.12)"/><line x1="58.5" y1="61" x2="61.5" y2="61" stroke="#38bdf8" stroke-width="2.6"/><ellipse cx="44" cy="103" rx="11" ry="8" fill="#f3c68f" stroke="#d49b57" stroke-width="1.5"/><ellipse cx="76" cy="103" rx="11" ry="8" fill="#f3c68f" stroke="#d49b57" stroke-width="1.5"/></svg>';
-document.querySelectorAll('.cat-art').forEach(el => { el.innerHTML = WIZARD_CAT_SVG; });
+const CUTE_CAT_SVG = '<svg viewBox="0 0 120 120" width="98" height="98"><polygon points="32,54 38,24 55,46" fill="#e5984b" stroke="#c87d32" stroke-width="2" stroke-linejoin="round"/><polygon points="88,54 82,24 65,46" fill="#e5984b" stroke="#c87d32" stroke-width="2" stroke-linejoin="round"/><polygon points="37,50 42,31 51,45" fill="#f5a9a9"/><polygon points="83,50 78,31 69,45" fill="#f5a9a9"/><ellipse cx="60" cy="88" rx="35" ry="26" fill="#e5984b"/><ellipse cx="60" cy="66" rx="30" ry="24" fill="#f2b36d"/><ellipse cx="60" cy="72" rx="15" ry="10" fill="#fff7ed"/><polygon points="60,66 56,70 64,70" fill="#e07a7a"/><path d="M53,74 Q60,79 60,74 Q60,79 67,74" stroke="#5a3a22" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="48" cy="61" r="5" fill="#0f172a"/><circle cx="72" cy="61" r="5" fill="#0f172a"/><circle cx="46" cy="59" r="1.8" fill="#fff"/><circle cx="70" cy="59" r="1.8" fill="#fff"/><circle cx="48" cy="61" r="10.5" stroke="#7dd3fc" stroke-width="2.5" fill="rgba(125,211,252,0.12)"/><circle cx="72" cy="61" r="10.5" stroke="#7dd3fc" stroke-width="2.5" fill="rgba(125,211,252,0.12)"/><line x1="58.5" y1="61" x2="61.5" y2="61" stroke="#7dd3fc" stroke-width="2.5"/><ellipse cx="44" cy="103" rx="11" ry="8" fill="#f2b36d" stroke="#c87d32" stroke-width="1.5"/><ellipse cx="76" cy="103" rx="11" ry="8" fill="#f2b36d" stroke="#c87d32" stroke-width="1.5"/></svg>';
+document.querySelectorAll('.cat-art').forEach(el => { el.innerHTML = CUTE_CAT_SVG; });
+
 
