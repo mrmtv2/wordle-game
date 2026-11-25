@@ -1,5 +1,5 @@
-const tg = window.Telegram.WebApp;
-tg.expand();
+const tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : {};
+if (tg.expand) tg.expand();
 const userName = (tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.first_name) || "Ангелина";
 
 const ATTEMPTS = { 4:{easy:8,medium:6,hard:5}, 5:{easy:10,medium:8,hard:5}, 6:{easy:10,medium:8,hard:5} };
