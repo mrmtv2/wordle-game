@@ -4,24 +4,25 @@ if (tg.expand) tg.expand();
 const userName = (tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.first_name) || "Ангелина";
 
 const GREETINGS = [
-  `Привет, ${userName}! Прокачаем мозги? 🧠✨`,
-  `Привет! Я по тебе скучал, ${userName}, ну что, поиграем? 💖`,
-  `О, ${userName} заглянула! Устроим разминку для ума? 🎯`,
-  `Привет, ${userName}! Готова разгадать пару хитрых слов? 🔥`,
-  `С возвращением, ${userName}! Проверим твою интуицию сегодня? 🌟`,
-  `Привет-привет, ${userName}! Самое время немного отвлечься и поиграть ☕️🎮`,
-  `Ура, ${userName} здесь! Покажем этим словам, кто тут главный? 👑`,
-  `Привет, ${userName}! Загадаем слово посложнее или начнём с разминки? 😉`,
-  `Рад тебя видеть, ${userName}! Погнали бить новые рекорды? 🚀`,
-  `Привет, ${userName}! У меня как раз припасено кое-что интересное для тебя 🎁`
+  "Мяу, привет, " + userName + "! Прокачаем мозги? 🧠✨",
+  "Привет! Я по тебе скучал, " + userName + ", ну что, поиграем? 💖",
+  "О, " + userName + " заглянула! Устроим разминку для ума? 🎯",
+  "Привет, " + userName + "! Я тут поправил очки и загадал отличное слово! 🔥",
+  "С возвращением, " + userName + "! Проверим твою интуицию сегодня? 🌟",
+  "Привет-привет, " + userName + "! Самое время отвлечься и поиграть ☕️🎮",
+  "Ура, " + userName + " здесь! Покажем этим словам, кто тут главный? 👑",
+  "Привет, " + userName + "! Загадаем слово посложнее или начнём с разминки? 😉",
+  "Рад тебя видеть, " + userName + "! Погнали бить новые рекорды? 🚀",
+  "Мур-привет, " + userName + "! У меня припасено кое-что интересное для тебя 🎁"
 ];
 
-const DIFF_LABELS = {
-  easy: "🟢 Разминочный",
-  medium: "🟡 Ммм, не дурно!",
-  hard: "🔴 Ты что, профи?"
+const BANNER_REACTIONS = {
+  easy: { title: "🟢 Разминочный!", sub: "Разогреваемся, " + userName + " — у тебя куча попыток!" },
+  medium: { title: "🟡 Ммм, не дурно!", sub: "Золотая середина, " + userName + " — я в тебя верю!" },
+  hard: { title: "🔴 Ты что, профи?!", sub: "Ого, " + userName + ", всего 5 попыток — погнали!" }
 };
 
+const DIFF_SHORT = { easy: "Лёгкий", medium: "Средний", hard: "Сложный" };
 const ATTEMPTS = { 4:{easy:8,medium:6,hard:5}, 5:{easy:10,medium:8,hard:5}, 6:{easy:10,medium:8,hard:5} };
 const KB_ROWS = [
   ["Й","Ц","У","К","Е","Н","Г","Ш","Щ","З","Х"],
@@ -33,12 +34,12 @@ let wordLen = 5, diff = 'medium', secret = '', maxRows = 8, curRow = 0, curGuess
 let winStreak = Number(localStorage.getItem('w_win') || 0);
 let lossStreak = Number(localStorage.getItem('w_loss') || 0);
 let lastShareText = '';
-let fwTimer = null, fwAnimId = null;
+let fwTimer = null, fwAnimId = null, bannerTimeout = null;
 
 document.getElementById('welcome-msg').innerText = GREETINGS[Math.floor(Math.random() * GREETINGS.length)];
 
 function updateStreakBadge() {
-  document.getElementById('streak-info').innerText = `🔥 Серия побед: ${winStreak}`;
+  document.getElementById('streak-info').innerText = "🔥 Серия побед: " + winStreak;
 }
 updateStreakBadge();
 
@@ -46,7 +47,6 @@ function openSetup() {
   document.getElementById('welcome-screen').style.display = 'none';
   document.getElementById('setup-screen').style.display = 'block';
 }
-
 function selectLen(l, el) {
   wordLen = l;
   document.querySelectorAll('#len-group .opt-btn').forEach(b => b.classList.remove('active'));
@@ -58,12 +58,22 @@ function selectDiff(d, el) {
   el.classList.add('active');
 }
 
+function showCatBanner(diffKey) {
+  const banner = document.getElementById('cat-banner');
+  const react = BANNER_REACTIONS[diffKey];
+  document.getElementById('banner-title').innerText = react.title;
+  document.getElementById('banner-sub').innerText = react.sub;
+  if (bannerTimeout) clearTimeout(bannerTimeout);
+  banner.classList.add('show');
+  if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+  bannerTimeout = setTimeout(() => { banner.classList.remove('show'); }, 2100);
+}
+
 function stopFireworks() {
   if (fwTimer) { clearInterval(fwTimer); fwTimer = null; }
   if (fwAnimId) { cancelAnimationFrame(fwAnimId); fwAnimId = null; }
   const canvas = document.getElementById('fw-canvas');
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
 }
 
 function backToMenu() {
@@ -72,7 +82,6 @@ function backToMenu() {
   document.getElementById('game-screen').style.display = 'none';
   document.getElementById('setup-screen').style.display = 'block';
 }
-
 function startGame() {
   stopFireworks();
   document.getElementById('modal').style.display = 'none';
@@ -83,7 +92,7 @@ function startGame() {
   maxRows = ATTEMPTS[wordLen][diff];
   curRow = 0; curGuess = ''; gameOver = false;
 
-  document.getElementById('info-label').innerText = `${wordLen} букв • ${DIFF_LABELS[diff]} (${maxRows} поп.)`;
+  document.getElementById('info-label').innerText = wordLen + " букв • " + DIFF_SHORT[diff] + " (" + maxRows + " поп.)";
 
   const board = document.getElementById('board');
   board.innerHTML = '';
@@ -96,12 +105,13 @@ function startGame() {
       tile.className = 'tile';
       tile.style.width = size + 'px';
       tile.style.height = size + 'px';
-      tile.id = `t-${r}-${c}`;
+      tile.id = 't-' + r + '-' + c;
       row.appendChild(tile);
     }
     board.appendChild(row);
   }
   renderKeyboard();
+  showCatBanner(diff);
 }
 
 function renderKeyboard() {
@@ -125,20 +135,14 @@ function renderKeyboard() {
 function handleKey(k) {
   if (gameOver) return;
   if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-  if (k === '⌫') {
-    curGuess = curGuess.slice(0, -1);
-    updateRow();
-  } else if (k === 'ВВОД') {
-    if (curGuess.length === wordLen) submitGuess();
-  } else if (curGuess.length < wordLen) {
-    curGuess += k;
-    updateRow();
-  }
+  if (k === '⌫') { curGuess = curGuess.slice(0, -1); updateRow(); }
+  else if (k === 'ВВОД') { if (curGuess.length === wordLen) submitGuess(); }
+  else if (curGuess.length < wordLen) { curGuess += k; updateRow(); }
 }
 
 function updateRow() {
   for (let c = 0; c < wordLen; c++) {
-    const tile = document.getElementById(`t-${curRow}-${c}`);
+    const tile = document.getElementById('t-' + curRow + '-' + c);
     tile.innerText = curGuess[c] || '';
     tile.classList.toggle('filled', !!curGuess[c]);
   }
@@ -159,15 +163,10 @@ function launchFireworks() {
     for (let i = 0; i < 42; i++) {
       const angle = (Math.PI * 2 * i) / 42;
       const speed = Math.random() * 4.5 + 1.8;
-      particles.push({
-        x: cx, y: cy, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
-        alpha: 1, color: colors[Math.floor(Math.random() * colors.length)]
-      });
+      particles.push({ x: cx, y: cy, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, alpha: 1, color: colors[Math.floor(Math.random() * colors.length)] });
     }
   }
-
-  spawnBurst();
-  spawnBurst();
+  spawnBurst(); spawnBurst();
   fwTimer = setInterval(spawnBurst, 650);
 
   function animate() {
@@ -191,12 +190,10 @@ function submitGuess() {
     if (curGuess[i] === secArr[i]) { res[i] = 'green'; secArr[i] = null; }
   }
   for (let i = 0; i < wordLen; i++) {
-    if (res[i] === 'gray' && secArr.includes(curGuess[i])) {
-      res[i] = 'yellow'; secArr[secArr.indexOf(curGuess[i])] = null;
-    }
+    if (res[i] === 'gray' && secArr.includes(curGuess[i])) { res[i] = 'yellow'; secArr[secArr.indexOf(curGuess[i])] = null; }
   }
   for (let i = 0; i < wordLen; i++) {
-    const tile = document.getElementById(`t-${curRow}-${i}`);
+    const tile = document.getElementById('t-' + curRow + '-' + i);
     tile.classList.add(res[i]);
     const keyBtn = document.getElementById('key-' + curGuess[i]);
     if (keyBtn) {
@@ -213,14 +210,14 @@ function submitGuess() {
     if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
     launchFireworks();
     let msg = diff === 'hard'
-      ? `👑 Фантастика, ${userName}! Слово <b>${secret}</b> взято на СЛОЖНОМ уровне! Ты настоящий гений! 🔥`
-      : `🎉 Браво, ${userName}! Слово <b>${secret}</b> отгадано за ${curRow + 1} поп.! Какая же ты умница! ✨`;
+      ? "👑 Фантастика, " + userName + "! Слово <b>" + secret + "</b> взято на СЛОЖНОМ уровне! Ты настоящий гений! 🔥"
+      : "🎉 Браво, " + userName + "! Слово <b>" + secret + "</b> отгадано за " + (curRow + 1) + " поп.! Какая же ты умница! ✨";
     if (winStreak >= 3) {
-      if (diff !== 'hard') msg += `<br><br>🚀 <b>3 победы подряд!</b> Пора повышать сложность!`;
-      else if (wordLen < 6) msg += `<br><br>🔥 <b>3 победы подряд на сложном!</b> Пора переходить на ${wordLen + 1} букв!`;
-      else msg += `<br><br>💎 <b>3 победы подряд на 6 буквах и сложном уровне!</b> Ты просто настоящая крутышка!`;
+      if (diff !== 'hard') msg += "<br><br>🚀 <b>3 победы подряд!</b> Котик советует повышать сложность!";
+      else if (wordLen < 6) msg += "<br><br>🔥 <b>3 победы подряд на сложном!</b> Пора переходить на " + (wordLen + 1) + " букв!";
+      else msg += "<br><br>💎 <b>3 победы подряд на 6 буквах и сложном уровне!</b> Ты просто настоящая крутышка!";
     }
-    lastShareText = `🏆 ${userName} угадала слово «${secret}» (${wordLen} букв) за ${curRow + 1}/${maxRows} попыток!`;
+    lastShareText = "🏆 " + userName + " угадала слово «" + secret + "» (" + wordLen + " букв) за " + (curRow + 1) + "/" + maxRows + " попыток!";
     showModal('🎆 ПОБЕДА! 🎆', msg);
     return;
   }
@@ -232,10 +229,10 @@ function submitGuess() {
     updateStreakBadge();
     if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
     let msg = diff === 'hard'
-      ? `💛 Ничего страшного, ${userName}! Это же <b>сложный</b> уровень. Было загадано слово: <b>${secret}</b>.`
-      : `🤗 Ничего страшного, ${userName}, в следующий раз точно получится! Слово было: <b>${secret}</b>.`;
-    if (lossStreak >= 3) msg += `<br><br>☕️ <b>Уже 3 раза подряд не поддаётся!</b> Отдохни немного и попей вкусный чай с вкусняшкой! 🍰`;
-    lastShareText = `🎮 Сыграла в «Угадай слово» (${wordLen} букв), загаданное слово было «${secret}».`;
+      ? "💛 Ничего страшного, " + userName + "! Это же <b>сложный</b> уровень. Котик загадал слово: <b>" + secret + "</b>."
+      : "🤗 Ничего страшного, " + userName + ", в следующий раз точно получится! Слово было: <b>" + secret + "</b>.";
+    if (lossStreak >= 3) msg += "<br><br>☕️ <b>Уже 3 раза подряд не поддаётся!</b> Котик велел отдохнуть и попить вкусный чай с вкусняшкой! 🍰";
+    lastShareText = "🎮 Сыграла в «Угадай слово» (" + wordLen + " букв), загаданное слово было «" + secret + "».";
     showModal('Попытки закончились', msg);
   }
 }
